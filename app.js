@@ -22,9 +22,18 @@ client.on('ready', async () => {
 
   const myGroups = [];
   for (const group of groups) {
-    const info = await group.fetchMessages({ limit: 1 }).catch(() => null); // fetch to ensure metadata
-    const metadata = await client.getChatById(group.id._serialized);
-    const me = metadata.participants.find((p) => p.id._serialized === client.info.wid._serialized);
+    await group.fetchMessages({ limit: 1 }).catch(() => null); // fetch to ensure metadata
+    let metadata;
+    try {
+      metadata = await client.getChatById(group.id._serialized);
+    } catch (err) {
+      console.log(`Skipping group ${group.id._serialized}: ${err.message}`);
+      continue;
+    }
+    if (!metadata || !metadata.participants) continue;
+    const me = metadata.participants.find(
+      (p) => p.id._serialized === client.info.wid._serialized
+    );
     if (me && me.isAdmin) {
       myGroups.push(metadata);
     }
